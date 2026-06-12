@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Scout360 — AI Sports Scouting</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <style>body{font-family:'Inter',sans-serif;}</style>
+</head>
+<body class="bg-gray-950 text-white min-h-screen">
+<nav class="border-b border-gray-800 px-6 py-4 flex items-center justify-between">
+  <div class="flex items-center gap-2"><div class="w-8 h-8 bg-emerald-600 rounded-lg flex items-center justify-center">⚽</div><span class="font-bold text-xl">Scout360</span></div>
+  <div class="flex gap-2">
+    <button onclick="showTab('players')" class="tab-btn px-3 py-2 rounded-lg text-sm bg-emerald-600 text-white" data-tab="players">Players</button>
+    <button onclick="showTab('add-player')" class="tab-btn px-3 py-2 rounded-lg text-sm text-gray-400" data-tab="add-player">Scout Player</button>
+    <button onclick="showTab('ai-report')" class="tab-btn px-3 py-2 rounded-lg text-sm text-gray-400" data-tab="ai-report">AI Report</button>
+    <button onclick="showTab('shortlist')" class="tab-btn px-3 py-2 rounded-lg text-sm text-gray-400" data-tab="shortlist">Shortlist</button>
+  </div>
+</nav>
+
+<!-- PLAYERS -->
+<div id="tab-players" class="p-6">
+  <div class="flex justify-between items-center mb-6">
+    <h1 class="text-2xl font-bold">Player Database ⚽</h1>
+    <div class="flex gap-2">
+      <select id="filter-sport" onchange="loadPlayers()" class="bg-gray-900 border border-gray-800 rounded-lg px-3 py-2 text-sm">
+        <option value="">All Sports</option><option>Football</option><option>Basketball</option><option>Volleyball</option>
+      </select>
+      <select id="filter-pos" onchange="loadPlayers()" class="bg-gray-900 border border-gray-800 rounded-lg px-3 py-2 text-sm">
+        <option value="">All Positions</option><option>Forward</option><option>Midfielder</option><option>Defender</option><option>Goalkeeper</option><option>Guard</option><option>Center</option>
+      </select>
+    </div>
+  </div>
+  <div id="players-grid" class="grid grid-cols-3 gap-4"></div>
+</div>
+
+<!-- ADD PLAYER -->
+<div id="tab-add-player" class="p-6 hidden">
+  <h1 class="text-2xl font-bold mb-6">Scout a New Player 🔍</h1>
+  <div class="max-w-2xl bg-gray-900 border border-gray-800 rounded-xl p-6">
+    <div class="grid grid-cols-2 gap-4">
+      <div><label class="text-sm text-gray-400 block mb-1">Full Name</label><input id="sp-name" type="text" placeholder="Player name" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm"/></div>
+      <div><label class="text-sm text-gray-400 block mb-1">Age</label><input id="sp-age" type="number" placeholder="Age" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm"/></div>
+      <div><label class="text-sm text-gray-400 block mb-1">Sport</label><select id="sp-sport" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm"><option>Football</option><option>Basketball</option><option>Volleyball</option></select></div>
+      <div><label class="text-sm text-gray-400 block mb-1">Position</label><input id="sp-position" type="text" placeholder="e.g. Striker, Point Guard" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm"/></div>
+      <div><label class="text-sm text-gray-400 block mb-1">Current Club/Team</label><input id="sp-club" type="text" placeholder="Club name" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm"/></div>
+      <div><label class="text-sm text-gray-400 block mb-1">Nationality</label><input id="sp-nat" type="text" placeholder="Country" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm"/></div>
+    </div>
+    <div class="mt-4 grid grid-cols-4 gap-3">
+      <div><label class="text-sm text-gray-400 block mb-1">Pace (0-99)</label><input id="sp-pace" type="number" min="0" max="99" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm"/></div>
+      <div><label class="text-sm text-gray-400 block mb-1">Shooting</label><input id="sp-shooting" type="number" min="0" max="99" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm"/></div>
+      <div><label class="text-sm text-gray-400 block mb-1">Passing</label><input id="sp-passing" type="number" min="0" max="99" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm"/></div>
+      <div><label class="text-sm text-gray-400 block mb-1">Physical</label><input id="sp-physical" type="number" min="0" max="99" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm"/></div>
+    </div>
+    <div class="mt-4"><label class="text-sm text-gray-400 block mb-1">Scout Notes</label><textarea id="sp-notes" rows="3" placeholder="Observations, strengths, weaknesses..." class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm resize-none"></textarea></div>
+    <div class="flex gap-3 mt-4">
+      <button onclick="savePlayer()" class="flex-1 bg-emerald-600 hover:bg-emerald-700 py-2 rounded-lg font-medium">💾 Save Player</button>
+      <button onclick="saveAndAnalyze()" class="flex-1 bg-blue-600 hover:bg-blue-700 py-2 rounded-lg font-medium">🤖 Save + AI Report</button>
+    </div>
+  </div>
+</div>
+
+<!-- AI REPORT -->
+<div id="tab-ai-report" class="p-6 hidden">
+  <h1 class="text-2xl font-bold mb-2">AI Scouting Report 🤖</h1>
+  <p class="text-gray-400 mb-6">Generate a full professional scouting report for any player.</p>
+  <div class="grid grid-cols-2 gap-6">
+    <div class="space-y-3">
+      <input id="r-name" type="text" placeholder="Player name" class="w-full bg-gray-900 border border-gray-800 rounded-xl px-4 py-3 text-sm"/>
+      <input id="r-age" type="text" placeholder="Age" class="w-full bg-gray-900 border border-gray-800 rounded-xl px-4 py-3 text-sm"/>
+      <input id="r-position" type="text" placeholder="Position" class="w-full bg-gray-900 border border-gray-800 rounded-xl px-4 py-3 text-sm"/>
+      <input id="r-stats" type="text" placeholder="Key stats (goals, assists, matches...)" class="w-full bg-gray-900 border border-gray-800 rounded-xl px-4 py-3 text-sm"/>
+      <textarea id="r-observations" rows="5" placeholder="Your observations..." class="w-full bg-gray-900 border border-gray-800 rounded-xl px-4 py-3 text-sm resize-none"></textarea>
+      <button onclick="generateReport()" class="w-full bg-emerald-600 hover:bg-emerald-700 py-3 rounded-xl font-bold">📋 Generate Report</button>
+    </div>
+    <div id="report-result" class="bg-gray-900 border border-gray-800 rounded-xl p-5 min-h-64"><p class="text-gray-500 text-sm">Professional scouting report will appear here...</p></div>
+  </div>
+</div>
+
+<!-- SHORTLIST -->
+<div id="tab-shortlist" class="p-6 hidden">
+  <h1 class="text-2xl font-bold mb-6">Shortlist ⭐</h1>
+  <div id="shortlist-grid" class="grid grid-cols-3 gap-4"></div>
+</div>
+
+<script>
+const SUPABASE_URL='https://nmulrsbqdeqokvrybapn.supabase.co';
+const SUPABASE_KEY='%%SUPABASE_ANON_KEY%%';
+const GROQ_KEY='%%GROQ_KEY%%';
+const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+
+function showTab(tab){
+  document.querySelectorAll('[id^="tab-"]').forEach(el=>el.classList.add('hidden'));
+  document.getElementById('tab-'+tab).classList.remove('hidden');
+  document.querySelectorAll('.tab-btn').forEach(btn=>{btn.classList.remove('bg-emerald-600','text-white');btn.classList.add('text-gray-400');});
+  const a=document.querySelector(`[data-tab="${tab}"]`);a.classList.add('bg-emerald-600','text-white');a.classList.remove('text-gray-400');
+  if(tab==='players')loadPlayers();
+  if(tab==='shortlist')loadShortlist();
+}
+
+function ratingBar(val){
+  const color=val>=80?'bg-green-500':val>=60?'bg-yellow-500':'bg-red-500';
+  return`<div class="flex items-center gap-2"><div class="flex-1 bg-gray-800 rounded-full h-1.5"><div class="${color} h-1.5 rounded-full" style="width:${val}%"></div></div><span class="text-xs w-6">${val}</span></div>`;
+}
+
+function overallScore(p){
+  const vals=[p.pace,p.shooting,p.passing,p.physical].filter(Boolean);
+  return vals.length?Math.round(vals.reduce((a,b)=>a+b,0)/vals.length):0;
+}
+
+async function loadPlayers(){
+  let q=sb.from('s360_players').select('*');
+  const sport=document.getElementById('filter-sport').value;
+  const pos=document.getElementById('filter-pos').value;
+  if(sport)q=q.eq('sport',sport);
+  const{data}=await q;
+  document.getElementById('players-grid').innerHTML=(data||[]).map(p=>{
+    const ovr=overallScore(p);
+    return`<div class="bg-gray-900 border border-gray-800 rounded-xl p-5">
+      <div class="flex justify-between items-start mb-3">
+        <div><h3 class="font-bold">${p.name}</h3><p class="text-sm text-gray-400">${p.position} · ${p.sport}</p><p class="text-xs text-gray-500">${p.club||''} · ${p.nationality||''}</p></div>
+        <div class="text-2xl font-black ${ovr>=80?'text-green-400':ovr>=60?'text-yellow-400':'text-red-400'}">${ovr||'—'}</div>
+      </div>
+      ${p.pace?`<div class="space-y-1 text-xs text-gray-400 mb-3">
+        <div class="flex justify-between"><span>PAC</span>${ratingBar(p.pace)}</div>
+        <div class="flex justify-between"><span>SHO</span>${ratingBar(p.shooting)}</div>
+        <div class="flex justify-between"><span>PAS</span>${ratingBar(p.passing)}</div>
+        <div class="flex justify-between"><span>PHY</span>${ratingBar(p.physical)}</div>
+      </div>`:''}
+      <div class="flex gap-2">
+        <button onclick="shortlistPlayer('${p.id}')" class="flex-1 text-xs bg-yellow-900 text-yellow-300 py-1.5 rounded-lg hover:bg-yellow-800">⭐ Shortlist</button>
+        <button onclick="deletePlayer('${p.id}')" class="text-xs text-red-400 px-2">✕</button>
+      </div>
+    </div>`;}).join('')||'<p class="text-gray-500 col-span-3">No players scouted yet.</p>';
+}
+
+async function savePlayer(){
+  const data=getFormData();
+  await sb.from('s360_players').insert([data]);
+  showTab('players');
+}
+
+async function saveAndAnalyze(){
+  const data=getFormData();
+  const{data:saved}=await sb.from('s360_players').insert([data]).select();
+  document.getElementById('r-name').value=data.name;
+  document.getElementById('r-age').value=data.age;
+  document.getElementById('r-position').value=data.position;
+  document.getElementById('r-stats').value=`Pace:${data.pace} Shooting:${data.shooting} Passing:${data.passing} Physical:${data.physical}`;
+  document.getElementById('r-observations').value=data.notes||'';
+  showTab('ai-report');
+  generateReport();
+}
+
+function getFormData(){
+  return{name:document.getElementById('sp-name').value,age:parseInt(document.getElementById('sp-age').value),sport:document.getElementById('sp-sport').value,position:document.getElementById('sp-position').value,club:document.getElementById('sp-club').value,nationality:document.getElementById('sp-nat').value,pace:parseInt(document.getElementById('sp-pace').value)||0,shooting:parseInt(document.getElementById('sp-shooting').value)||0,passing:parseInt(document.getElementById('sp-passing').value)||0,physical:parseInt(document.getElementById('sp-physical').value)||0,notes:document.getElementById('sp-notes').value};
+}
+
+async function shortlistPlayer(id){
+  await sb.from('s360_players').update({shortlisted:true}).eq('id',id);
+  alert('Player added to shortlist! ⭐');
+}
+
+async function loadShortlist(){
+  const{data}=await sb.from('s360_players').select('*').eq('shortlisted',true);
+  document.getElementById('shortlist-grid').innerHTML=(data||[]).map(p=>{
+    const ovr=overallScore(p);
+    return`<div class="bg-gray-900 border border-yellow-800 rounded-xl p-5">
+      <div class="flex justify-between mb-2"><div><h3 class="font-bold">${p.name}</h3><p class="text-sm text-gray-400">${p.position}</p></div><span class="text-xl font-black text-yellow-400">${ovr}</span></div>
+      <p class="text-xs text-gray-500">${p.club||''} · Age ${p.age||'?'}</p>
+    </div>`;}).join('')||'<p class="text-gray-500">No players shortlisted yet.</p>';
+}
+
+async function deletePlayer(id){
+  await sb.from('s360_players').delete().eq('id',id);loadPlayers();
+}
+
+async function generateReport(){
+  const name=document.getElementById('r-name').value,age=document.getElementById('r-age').value,pos=document.getElementById('r-position').value,stats=document.getElementById('r-stats').value,obs=document.getElementById('r-observations').value;
+  const el=document.getElementById('report-result');
+  el.innerHTML='<p class="text-gray-400 animate-pulse">⚽ Generating report...</p>';
+  const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{method:'POST',headers:{'Authorization':`Bearer ${GROQ_KEY}`,'Content-Type':'application/json'},body:JSON.stringify({model:'llama-3.3-70b-versatile',messages:[{role:'user',content:`You are a professional football/sports scout. Write a scouting report:\nPlayer: ${name}, Age: ${age}, Position: ${pos}\nStats: ${stats}\nObservations: ${obs}\n\nWrite a professional report with: Executive Summary, Technical Skills, Physical Profile, Mental Attributes, Potential Rating, Recommended Club Level, Overall Verdict. Be professional and concise.`}],max_tokens:600})});
+  const data=await res.json();
+  el.innerHTML=`<pre class="whitespace-pre-wrap text-sm text-gray-200 font-sans">${data.choices[0].message.content}</pre>`;
+}
+
+loadPlayers();
+</script>
+</body>
+</html>
