@@ -5,199 +5,239 @@
 <title>Scout360 — AI Sports Scouting</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <style>
-  body { font-family: 'Inter', system-ui, sans-serif; background: #05090f; color: #e2e8f0; }
-  .glass { background: rgba(255,255,255,0.04); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.08); }
-  .gradient-text { background: linear-gradient(135deg, #3b82f6, #8b5cf6, #06b6d4); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-  .btn { background: linear-gradient(135deg, #3b82f6, #8b5cf6); border: none; padding: 10px 24px; border-radius: 10px; cursor: pointer; font-weight: 600; color: white; transition: all 0.2s; }
-  .btn:hover { transform: translateY(-1px); box-shadow: 0 8px 20px rgba(59,130,246,0.4); }
-  input, textarea, select { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 10px 14px; color: #e2e8f0; width: 100%; }
-  input:focus, textarea:focus, select:focus { outline: none; border-color: #3b82f6; }
-  .player-card { background: linear-gradient(145deg, rgba(59,130,246,0.08), rgba(139,92,246,0.05)); border: 1px solid rgba(59,130,246,0.2); border-radius: 16px; padding: 20px; transition: all 0.3s; }
-  .player-card:hover { border-color: rgba(59,130,246,0.5); transform: translateY(-3px); box-shadow: 0 15px 30px rgba(59,130,246,0.15); }
-  .stat-bar { height: 5px; background: rgba(255,255,255,0.08); border-radius: 3px; }
-  .stat-fill { height: 100%; border-radius: 3px; transition: width 1s; }
-  .shortlisted { border-color: rgba(234,179,8,0.5) !important; background: linear-gradient(145deg, rgba(234,179,8,0.08), rgba(234,179,8,0.03)) !important; }
-  .tab-active { background: rgba(59,130,246,0.2); border-bottom: 2px solid #3b82f6; }
+@import url('https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700;800;900&display=swap');
+*{font-family:'Barlow',sans-serif;box-sizing:border-box;margin:0;padding:0}
+body{background:#0d1117;color:#e6edf3;min-height:100vh}
+.pitch-header{background:linear-gradient(135deg,#0d2137 0%,#0a3d1f 50%,#0d2137 100%);padding:40px 48px 0;position:relative;overflow:hidden}
+.pitch-lines{position:absolute;inset:0;background-image:repeating-linear-gradient(90deg,rgba(255,255,255,.03) 0,rgba(255,255,255,.03) 1px,transparent 1px,transparent 60px);pointer-events:none}
+.pitch-circle{position:absolute;right:80px;top:50%;transform:translateY(-50%);width:200px;height:200px;border-radius:50%;border:1px solid rgba(255,255,255,.06);pointer-events:none}
+.nav-strip{display:flex;gap:4px;margin-top:32px;position:relative;z-index:1}
+.nav-tab{padding:12px 22px;font-weight:700;font-size:13px;text-transform:uppercase;letter-spacing:.8px;cursor:pointer;color:rgba(255,255,255,.4);border-bottom:3px solid transparent;transition:all .2s}
+.nav-tab:hover{color:rgba(255,255,255,.8)}
+.nav-tab.active{color:#4ade80;border-bottom-color:#4ade80}
+.content{padding:32px 48px 60px}
+.panel{display:none}.panel.active{display:block}
+.player-card{background:#161b22;border:1px solid #21262d;border-radius:14px;overflow:hidden;transition:all .25s;cursor:pointer}
+.player-card:hover{border-color:#4ade80;transform:translateY(-3px);box-shadow:0 10px 30px rgba(74,222,128,.12)}
+.card-header{height:80px;display:flex;align-items:center;justify-content:space-between;padding:0 18px}
+.overall-badge{width:54px;height:54px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:20px;font-style:italic;flex-shrink:0}
+.card-body{padding:16px 18px}
+.stat-row{display:flex;justify-content:space-between;margin-top:10px}
+.stat-item{text-align:center}
+.stat-val{font-size:16px;font-weight:800;line-height:1}
+.stat-key{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#8b949e;margin-top:2px}
+.hex-bar{height:4px;border-radius:2px;background:#21262d;margin-top:3px;overflow:hidden}
+.hex-fill{height:100%;border-radius:2px;background:linear-gradient(90deg,#4ade80,#22c55e)}
+.players-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.report-form{background:#161b22;border:1px solid #21262d;border-radius:14px;padding:24px}
+label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#8b949e;display:block;margin-bottom:5px;margin-top:14px}
+input,select,textarea{background:#0d1117;border:1.5px solid #21262d;border-radius:8px;padding:10px 14px;color:#e6edf3;width:100%;font-size:14px;outline:none;transition:border .2s;font-family:'Barlow',sans-serif}
+input:focus,select:focus,textarea:focus{border-color:#4ade80}
+select option{background:#0d1117}
+.btn-green{background:#238636;color:#fff;border:none;padding:10px 22px;border-radius:8px;font-weight:700;font-size:14px;cursor:pointer;transition:all .2s;font-family:'Barlow',sans-serif;letter-spacing:.3px}
+.btn-green:hover{background:#2ea043;transform:translateY(-1px)}
+.btn-ghost{background:transparent;border:1.5px solid #30363d;color:#8b949e;padding:9px 18px;border-radius:8px;font-weight:600;font-size:14px;cursor:pointer;transition:all .2s;font-family:'Barlow',sans-serif}
+.btn-ghost:hover{border-color:#4ade80;color:#4ade80}
+.shortlist-star{color:#8b949e;font-size:18px;cursor:pointer;transition:color .2s;background:none;border:none;padding:0}
+.shortlist-star.on{color:#fbbf24}
+.add-form-wrap{background:#161b22;border:1px solid #21262d;border-radius:14px;padding:24px;margin-bottom:20px;display:none}
+.add-form-wrap.open{display:block}
+.stat-inputs{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-top:8px}
+.ai-output{background:#0d1117;border:1px solid #21262d;border-radius:10px;padding:20px;min-height:200px;font-size:14px;line-height:1.8;color:#e6edf3}
+.filter-bar{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap}
+.filter-btn{padding:7px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;border:1.5px solid #30363d;background:transparent;color:#8b949e;transition:all .2s;font-family:'Barlow',sans-serif}
+.filter-btn.active,.filter-btn:hover{border-color:#4ade80;color:#4ade80;background:rgba(74,222,128,.07)}
 </style>
 </head>
 <body>
-<nav class="glass sticky top-0 z-50 px-6 py-4 flex items-center justify-between">
-  <div class="flex items-center gap-3">
-    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center text-xl">⚽</div>
-    <div><h1 class="font-black text-xl gradient-text">Scout360</h1><p class="text-xs text-slate-400">AI Sports Scouting</p></div>
-  </div>
-  <div class="flex gap-2">
-    <button onclick="showTab('players')" id="tab-players" class="px-4 py-2 rounded-lg text-sm font-medium tab-active transition-all">Players</button>
-    <button onclick="showTab('shortlist')" id="tab-shortlist" class="px-4 py-2 rounded-lg text-sm font-medium transition-all"><i class="fas fa-star mr-1 text-yellow-400"></i>Shortlist</button>
-    <button onclick="showTab('analyze')" id="tab-analyze" class="px-4 py-2 rounded-lg text-sm font-medium transition-all"><i class="fas fa-robot mr-1"></i>AI Report</button>
-  </div>
-</nav>
 
-<div class="max-w-7xl mx-auto px-6 py-8">
-  <!-- PLAYERS -->
-  <div id="panel-players">
-    <div class="flex justify-between items-center mb-6">
-      <div><h2 class="text-2xl font-bold">Player Database</h2><p class="text-slate-400 text-sm">Scout and track talent</p></div>
-      <button onclick="toggleForm('player-form')" class="btn"><i class="fas fa-user-plus mr-2"></i>Add Player</button>
-    </div>
-
-    <div id="player-form" class="hidden glass rounded-2xl p-6 mb-6">
-      <h3 class="font-semibold text-lg mb-4 gradient-text">New Player Card</h3>
-      <div class="grid grid-cols-4 gap-4">
-        <div class="col-span-2"><label class="text-xs text-slate-400 mb-1 block">Full Name *</label><input id="p-name" placeholder="Player name"></div>
-        <div><label class="text-xs text-slate-400 mb-1 block">Age</label><input id="p-age" type="number" placeholder="19"></div>
-        <div><label class="text-xs text-slate-400 mb-1 block">Sport</label>
-          <select id="p-sport"><option>Football</option><option>Basketball</option><option>Volleyball</option><option>Tennis</option><option>Athletics</option></select>
-        </div>
-        <div><label class="text-xs text-slate-400 mb-1 block">Position</label><input id="p-pos" placeholder="e.g. Striker, Playmaker"></div>
-        <div><label class="text-xs text-slate-400 mb-1 block">Club</label><input id="p-club" placeholder="Current club"></div>
-        <div><label class="text-xs text-slate-400 mb-1 block">Nationality</label><input id="p-nat" placeholder="e.g. Italian"></div>
-        <div><label class="text-xs text-slate-400 mb-1 block">Video URL</label><input id="p-video" placeholder="YouTube/highlight link"></div>
+<div class="pitch-header">
+  <div class="pitch-lines"></div>
+  <div class="pitch-circle"></div>
+  <div style="position:relative;z-index:1">
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:16px">
+      <div style="width:42px;height:42px;background:linear-gradient(135deg,#4ade80,#22c55e);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px">⚽</div>
+      <div>
+        <div style="font-size:22px;font-weight:900;letter-spacing:-.3px">Scout360</div>
+        <div style="font-size:12px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.8px">AI Sports Scouting Platform</div>
       </div>
-      <div class="mt-4">
-        <p class="text-xs text-slate-400 mb-3 font-medium">ATTRIBUTES (0-99)</p>
-        <div class="grid grid-cols-5 gap-3">
-          <div><label class="text-xs text-slate-500 mb-1 block">Pace</label><input id="p-pace" type="number" min="0" max="99" placeholder="75"></div>
-          <div><label class="text-xs text-slate-500 mb-1 block">Shooting</label><input id="p-shoot" type="number" min="0" max="99" placeholder="70"></div>
-          <div><label class="text-xs text-slate-500 mb-1 block">Passing</label><input id="p-pass" type="number" min="0" max="99" placeholder="80"></div>
-          <div><label class="text-xs text-slate-500 mb-1 block">Defending</label><input id="p-def" type="number" min="0" max="99" placeholder="60"></div>
-          <div><label class="text-xs text-slate-500 mb-1 block">Physical</label><input id="p-phys" type="number" min="0" max="99" placeholder="72"></div>
-        </div>
-      </div>
-      <div class="mt-4"><label class="text-xs text-slate-400 mb-1 block">Scout Notes</label><textarea id="p-notes" rows="2" placeholder="Observations, potential, areas to improve..."></textarea></div>
-      <div class="flex gap-3 mt-4">
-        <button onclick="savePlayer()" class="btn"><i class="fas fa-save mr-2"></i>Save Player</button>
-        <button onclick="toggleForm('player-form')" class="px-4 py-2 text-slate-400 hover:text-white text-sm transition-colors">Cancel</button>
+      <div style="margin-left:auto;display:flex;gap:12px">
+        <div style="text-align:right"><div style="font-size:22px;font-weight:800;color:#4ade80" id="h-players">0</div><div style="font-size:11px;color:rgba(255,255,255,.4)">Players</div></div>
+        <div style="text-align:right"><div style="font-size:22px;font-weight:800;color:#fbbf24" id="h-shortlist">0</div><div style="font-size:11px;color:rgba(255,255,255,.4)">Shortlisted</div></div>
       </div>
     </div>
+    <div class="nav-strip">
+      <div class="nav-tab active" onclick="showTab('players')" id="tab-players">Players DB</div>
+      <div class="nav-tab" onclick="showTab('shortlist')" id="tab-shortlist">⭐ Shortlist</div>
+      <div class="nav-tab" onclick="showTab('report')" id="tab-report">AI Report</div>
+    </div>
+  </div>
+</div>
 
-    <!-- Filters -->
-    <div class="flex gap-3 mb-6">
-      <select id="filter-sport" onchange="loadPlayers()" class="w-40">
-        <option value="">All Sports</option>
-        <option>Football</option><option>Basketball</option><option>Volleyball</option>
-      </select>
-      <input id="filter-search" onkeyup="loadPlayers()" placeholder="Search player..." class="w-64">
+<div class="content">
+
+  <div id="panel-players" class="panel active">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+      <div class="filter-bar" style="margin-bottom:0">
+        <button class="filter-btn active" onclick="filterSport(this,'')">All</button>
+        <button class="filter-btn" onclick="filterSport(this,'Football')">⚽ Football</button>
+        <button class="filter-btn" onclick="filterSport(this,'Basketball')">🏀 Basketball</button>
+        <button class="filter-btn" onclick="filterSport(this,'Volleyball')">🏐 Volleyball</button>
+      </div>
+      <button class="btn-green" onclick="document.getElementById('add-form').classList.toggle('open')">+ Add Player</button>
     </div>
 
-    <div id="players-grid" class="grid grid-cols-3 gap-5"></div>
+    <div class="add-form-wrap" id="add-form">
+      <div style="font-size:16px;font-weight:800;margin-bottom:16px;color:#4ade80">New Player Card</div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px">
+        <div><label>Name *</label><input id="p-name" placeholder="Marco Rossi"></div>
+        <div><label>Age</label><input id="p-age" type="number" placeholder="19"></div>
+        <div><label>Sport</label><select id="p-sport"><option>Football</option><option>Basketball</option><option>Volleyball</option><option>Tennis</option></select></div>
+        <div><label>Position</label><input id="p-pos" placeholder="Left Winger"></div>
+        <div><label>Club</label><input id="p-club" placeholder="AC Milan Youth"></div>
+        <div><label>Nationality</label><input id="p-nat" placeholder="Italian"></div>
+        <div><label>Video URL</label><input id="p-video" placeholder="YouTube link"></div>
+      </div>
+      <div class="stat-inputs">
+        <div><label>Pace</label><input id="p-pace" type="number" min="0" max="99" placeholder="82"></div>
+        <div><label>Shooting</label><input id="p-shoot" type="number" min="0" max="99" placeholder="75"></div>
+        <div><label>Passing</label><input id="p-pass" type="number" min="0" max="99" placeholder="78"></div>
+        <div><label>Defending</label><input id="p-def" type="number" min="0" max="99" placeholder="45"></div>
+        <div><label>Physical</label><input id="p-phys" type="number" min="0" max="99" placeholder="72"></div>
+      </div>
+      <label>Scout Notes</label>
+      <textarea id="p-notes" rows="2" placeholder="Observations, potential, areas to improve..." style="margin-bottom:14px"></textarea>
+      <div style="display:flex;gap:10px">
+        <button class="btn-green" onclick="savePlayer()">Save Player</button>
+        <button class="btn-ghost" onclick="document.getElementById('add-form').classList.remove('open')">Cancel</button>
+      </div>
+    </div>
+
+    <div class="players-grid" id="players-grid"></div>
   </div>
 
-  <!-- SHORTLIST -->
-  <div id="panel-shortlist" class="hidden">
-    <div class="mb-6"><h2 class="text-2xl font-bold"><i class="fas fa-star text-yellow-400 mr-2"></i>My Shortlist</h2><p class="text-slate-400 text-sm">Top prospects you're tracking</p></div>
-    <div id="shortlist-grid" class="grid grid-cols-3 gap-5"></div>
+  <div id="panel-shortlist" class="panel">
+    <div style="font-size:22px;font-weight:900;margin-bottom:20px;color:#fbbf24">⭐ My Shortlist</div>
+    <div class="players-grid" id="shortlist-grid"></div>
   </div>
 
-  <!-- AI ANALYZE -->
-  <div id="panel-analyze" class="hidden">
-    <div class="mb-6"><h2 class="text-2xl font-bold">AI Scouting Report</h2><p class="text-slate-400 text-sm">Generate detailed player analysis</p></div>
-    <div class="grid grid-cols-2 gap-6">
-      <div class="glass rounded-2xl p-6">
-        <div class="space-y-4">
-          <div><label class="text-xs text-slate-400 mb-1 block">Player Name & Position</label><input id="ai-player" placeholder="e.g. Marco Rossi, Left Winger, 19 years"></div>
-          <div><label class="text-xs text-slate-400 mb-1 block">Stats & Performance</label><textarea id="ai-stats" rows="4" placeholder="Goals: 15, Assists: 8, Speed: fast, Technique: high, Work rate: medium..."></textarea></div>
-          <div><label class="text-xs text-slate-400 mb-1 block">Target Role / Club Level</label><input id="ai-target" placeholder="e.g. Serie B starter, Champions League squad..."></div>
-          <button onclick="generateReport()" class="btn w-full"><i class="fas fa-brain mr-2"></i>Generate AI Report</button>
+  <div id="panel-report" class="panel">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px">
+      <div class="report-form">
+        <div style="font-size:16px;font-weight:800;margin-bottom:16px;color:#4ade80">Generate AI Scouting Report</div>
+        <label>Player Name & Position</label>
+        <input id="ai-player" placeholder="Marco Rossi, Left Winger, 19 years">
+        <label>Stats & Observations</label>
+        <textarea id="ai-stats" rows="4" placeholder="Goals: 12 in 18 games, pace: excellent, left foot dominant, strong aerial..."></textarea>
+        <label>Target Level</label>
+        <input id="ai-target" placeholder="Serie A first team / Champions League squad">
+        <div style="margin-top:16px">
+          <button class="btn-green" style="width:100%;padding:13px" onclick="generateReport()">⚡ Generate AI Report</button>
         </div>
       </div>
-      <div class="glass rounded-2xl p-6">
-        <h3 class="font-semibold mb-4 gradient-text">Scouting Report</h3>
-        <div id="ai-report" class="text-slate-400 text-sm flex flex-col items-center justify-center h-40 opacity-50">
-          <span class="text-4xl mb-3">⚽</span><p>Enter player data to generate report</p>
+      <div>
+        <div style="font-size:16px;font-weight:800;margin-bottom:14px">Report</div>
+        <div class="ai-output" id="ai-report">
+          <div style="color:#8b949e;text-align:center;padding:40px 0">
+            <div style="font-size:48px;margin-bottom:10px">📋</div>
+            <div>Fill in player details to generate a professional scouting report</div>
+          </div>
         </div>
       </div>
     </div>
   </div>
 </div>
 
-<div id="toast" class="fixed bottom-6 right-6 px-6 py-3 rounded-xl font-semibold hidden z-50 text-white"></div>
-
 <script>
-const SUPABASE_URL = 'https://nmulrsbqdeqokvrybapn.supabase.co'
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5tdWxyc2JxZGVxb2t2cnliYXBuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkyODY0NDcsImV4cCI6MjA5NDg2MjQ0N30.iGN_OGVkw0j3VCEi9qUroMbpT37P3UPRUf1cYyqFBys'
-const GROQ_KEY = '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'
-const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY)
+const SB=supabase.createClient('https://nmulrsbqdeqokvrybapn.supabase.co','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5tdWxyc2JxZGVxb2t2cnliYXBuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkyODY0NDcsImV4cCI6MjA5NDg2MjQ0N30.iGN_OGVkw0j3VCEi9qUroMbpT37P3UPRUf1cYyqFBys')
+const GROQ='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'
+let sportFilter=''
 
-function showToast(msg,type='success'){const t=document.getElementById('toast');t.textContent=msg;t.className=`fixed bottom-6 right-6 px-6 py-3 rounded-xl font-semibold z-50 text-white ${type==='error'?'bg-red-600':'bg-blue-600'}`;setTimeout(()=>t.classList.add('hidden'),3000)}
-function toggleForm(id){document.getElementById(id).classList.toggle('hidden')}
-function showTab(tab){['players','shortlist','analyze'].forEach(t=>{document.getElementById(`panel-${t}`).classList.add('hidden');document.getElementById(`tab-${t}`).classList.remove('tab-active')});document.getElementById(`panel-${tab}`).classList.remove('hidden');document.getElementById(`tab-${tab}`).classList.add('tab-active');if(tab==='players')loadPlayers();if(tab==='shortlist')loadShortlist()}
+function showTab(t){document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));document.querySelectorAll('.nav-tab').forEach(n=>n.classList.remove('active'));document.getElementById('panel-'+t).classList.add('active');document.getElementById('tab-'+t).classList.add('active');if(t==='players')loadPlayers();if(t==='shortlist')loadShortlist()}
+function filterSport(btn,sport){document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');sportFilter=sport;loadPlayers()}
 
-function statColor(v){if(v>=85)return '#22c55e';if(v>=70)return '#3b82f6';if(v>=55)return '#f59e0b';return '#ef4444'}
-function calcOverall(p){const stats=[p.pace,p.shooting,p.passing,p.physical,p.defending].filter(Boolean);return stats.length?Math.round(stats.reduce((a,b)=>a+b,0)/stats.length):0}
+function calcOverall(p){const s=[p.pace,p.shooting,p.passing,p.physical,p.defending].filter(Boolean);return s.length?Math.round(s.reduce((a,b)=>a+b)/s.length):0}
+function ovColor(v){return v>=85?'#fbbf24':v>=75?'#4ade80':v>=60?'#60a5fa':'#f87171'}
+function statColor(v){return v>=85?'#4ade80':v>=70?'#60a5fa':v>=55?'#fbbf24':'#f87171'}
 
-function renderPlayerCard(p,extra=''){
+async function seedData(){
+  const{data}=await SB.from('s360_players').select('id').limit(1)
+  if(data?.length)return
+  await SB.from('s360_players').insert([
+    {name:'Lorenzo Pellegrini',age:20,sport:'Football',position:'Attacking Midfielder',club:'Roma Primavera',nationality:'Italian',pace:76,shooting:82,passing:88,defending:42,physical:70,overall:72,notes:'Exceptional vision. Best passer in the U21 league.',shortlisted:true},
+    {name:'Gianluigi Varrese',age:18,sport:'Football',position:'Right Back',club:'Juventus Youth',nationality:'Italian',pace:89,shooting:55,passing:74,defending:81,physical:78,overall:75,notes:'Explosive pace. Needs work on crossing.',shortlisted:true},
+    {name:'Mbeki Adeyemi',age:17,sport:'Football',position:'Striker',club:'Napoli U19',nationality:'Nigerian',pace:93,shooting:85,passing:62,defending:30,physical:82,overall:80,notes:'Raw power. 22 goals this season. Huge potential.',shortlisted:false},
+    {name:'Sofia Camarda',age:19,sport:'Volleyball',position:'Setter',club:'Volley Milano',nationality:'Italian',pace:null,shooting:null,passing:91,defending:75,physical:68,overall:78,notes:'Exceptional court vision. National team candidate.',shortlisted:false},
+    {name:'James Okonkwo',age:21,sport:'Basketball',position:'Point Guard',club:'Olimpia Milano B',nationality:'Italian',pace:88,shooting:79,passing:85,defending:70,physical:74,overall:79,notes:'Elite playmaker. Averaged 18pts 9ast this season.',shortlisted:true},
+  ])
+}
+
+function renderCard(p){
   const ov=calcOverall(p)
-  const stats=[{l:'PAC',v:p.pace},{l:'SHO',v:p.shooting},{l:'PAS',v:p.passing},{l:'DEF',v:p.defending},{l:'PHY',v:p.physical}].filter(s=>s.v)
-  return `<div class="player-card ${p.shortlisted?'shortlisted':''}">
-    <div class="flex justify-between items-start mb-3">
-      <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-600 to-purple-700 flex items-center justify-center text-2xl font-black text-white">${ov||'?'}</div>
-      <div class="flex gap-2">
-        <button onclick="toggleShortlist('${p.id}',${p.shortlisted})" class="text-lg ${p.shortlisted?'text-yellow-400':'text-slate-600 hover:text-yellow-400'} transition-colors"><i class="fas fa-star"></i></button>
-        <button onclick="deleteRec('s360_players','${p.id}',loadPlayers)" class="text-slate-600 hover:text-red-400 transition-colors"><i class="fas fa-trash text-sm"></i></button>
+  const statDefs=[{k:'PAC',v:p.pace},{k:'SHO',v:p.shooting},{k:'PAS',v:p.passing},{k:'DEF',v:p.defending},{k:'PHY',v:p.physical}].filter(s=>s.v)
+  return`<div class="player-card">
+    <div class="card-header" style="background:linear-gradient(135deg,${ovColor(ov)}22,${ovColor(ov)}11)">
+      <div class="overall-badge" style="background:${ovColor(ov)};color:#000">${ov||'?'}</div>
+      <div style="text-align:center;flex:1;padding:0 10px"><div style="font-size:15px;font-weight:800">${p.name}</div><div style="font-size:12px;color:#8b949e;margin-top:2px">${p.position||''}</div><div style="font-size:11px;color:#4ade80;margin-top:1px">${p.sport||''}</div></div>
+      <button class="shortlist-star ${p.shortlisted?'on':''}" onclick="toggleShortlist('${p.id}',${p.shortlisted},event)">★</button>
+    </div>
+    <div class="card-body">
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+        ${p.age?`<span style="background:#21262d;color:#8b949e;padding:2px 8px;border-radius:5px;font-size:11px">${p.age} yrs</span>`:''}
+        ${p.club?`<span style="background:#21262d;color:#8b949e;padding:2px 8px;border-radius:5px;font-size:11px">${p.club}</span>`:''}
+        ${p.nationality?`<span style="background:#21262d;color:#8b949e;padding:2px 8px;border-radius:5px;font-size:11px">${p.nationality}</span>`:''}
       </div>
+      <div class="stat-row">${statDefs.map(s=>`<div class="stat-item"><div class="stat-val" style="color:${statColor(s.v||0)}">${s.v||'—'}</div><div class="stat-key">${s.k}</div></div>`).join('')}</div>
+      ${p.notes?`<div style="font-size:12px;color:#8b949e;margin-top:10px;line-height:1.4;border-top:1px solid #21262d;padding-top:8px">${p.notes.substring(0,70)}${p.notes.length>70?'...':''}</div>`:''}
+      ${p.video_url?`<a href="${p.video_url}" target="_blank" style="font-size:12px;color:#4ade80;margin-top:6px;display:block">▶ Watch Highlights</a>`:''}
     </div>
-    <h3 class="font-bold text-lg">${p.name}</h3>
-    <p class="text-sm text-blue-400 font-medium">${p.position||''} · ${p.sport||''}</p>
-    <div class="flex gap-3 text-xs text-slate-400 mt-1 mb-3">
-      ${p.age?`<span>${p.age} yrs</span>`:''}
-      ${p.club?`<span>${p.club}</span>`:''}
-      ${p.nationality?`<span>${p.nationality}</span>`:''}
-    </div>
-    ${stats.length?`<div class="space-y-1.5">${stats.map(s=>`<div class="flex items-center gap-2 text-xs"><span class="w-8 text-slate-400 font-bold">${s.l}</span><div class="stat-bar flex-1"><div class="stat-fill" style="width:${s.v}%;background:${statColor(s.v)}"></div></div><span class="w-6 text-right font-bold" style="color:${statColor(s.v)}">${s.v}</span></div>`).join('')}</div>`:''}
-    ${p.notes?`<p class="text-xs text-slate-500 mt-3 italic">"${p.notes.substring(0,80)}..."</p>`:''}
-    ${p.video_url?`<a href="${p.video_url}" target="_blank" class="block mt-2 text-xs text-blue-400 hover:underline"><i class="fas fa-play mr-1"></i>Watch Highlights</a>`:''}
-    ${extra}
   </div>`
 }
 
 async function savePlayer(){
   const d={name:document.getElementById('p-name').value,age:parseInt(document.getElementById('p-age').value)||null,sport:document.getElementById('p-sport').value,position:document.getElementById('p-pos').value,club:document.getElementById('p-club').value,nationality:document.getElementById('p-nat').value,video_url:document.getElementById('p-video').value,pace:parseInt(document.getElementById('p-pace').value)||null,shooting:parseInt(document.getElementById('p-shoot').value)||null,passing:parseInt(document.getElementById('p-pass').value)||null,defending:parseInt(document.getElementById('p-def').value)||null,physical:parseInt(document.getElementById('p-phys').value)||null,notes:document.getElementById('p-notes').value,shortlisted:false}
-  if(!d.name){showToast('Name required','error');return}
-  d.overall=calcOverall(d)
-  const{error}=await sb.from('s360_players').insert(d)
-  if(error){showToast('Error: '+error.message,'error');return}
-  showToast('✅ Player added!');toggleForm('player-form');loadPlayers()
+  if(!d.name)return
+  const s=[d.pace,d.shooting,d.passing,d.physical,d.defending].filter(Boolean)
+  d.overall=s.length?Math.round(s.reduce((a,b)=>a+b)/s.length):0
+  await SB.from('s360_players').insert(d);document.getElementById('add-form').classList.remove('open');loadPlayers()
 }
 
 async function loadPlayers(){
-  const sport=document.getElementById('filter-sport').value,search=document.getElementById('filter-search').value
-  let q=sb.from('s360_players').select('*').order('created_at',{ascending:false})
-  if(sport)q=q.eq('sport',sport)
+  let q=SB.from('s360_players').select('*').order('overall',{ascending:false})
+  if(sportFilter)q=q.eq('sport',sportFilter)
   const{data}=await q
-  const filtered=search?data.filter(p=>p.name.toLowerCase().includes(search.toLowerCase())):data
+  document.getElementById('h-players').textContent=data?.length||0
+  document.getElementById('h-shortlist').textContent=data?.filter(p=>p.shortlisted).length||0
   const grid=document.getElementById('players-grid')
-  if(!filtered?.length){grid.innerHTML='<div class="col-span-3 glass rounded-xl p-8 text-center text-slate-400"><span class="text-4xl block mb-3">⚽</span>No players found</div>';return}
-  grid.innerHTML=filtered.map(p=>renderPlayerCard(p)).join('')
+  if(!data?.length){grid.innerHTML='<div style="color:#8b949e;grid-column:1/-1;text-align:center;padding:48px">No players yet</div>';return}
+  grid.innerHTML=data.map(p=>renderCard(p)).join('')
 }
 
 async function loadShortlist(){
-  const{data}=await sb.from('s360_players').select('*').eq('shortlisted',true).order('created_at',{ascending:false})
+  const{data}=await SB.from('s360_players').select('*').eq('shortlisted',true).order('overall',{ascending:false})
   const grid=document.getElementById('shortlist-grid')
-  if(!data?.length){grid.innerHTML='<div class="col-span-3 glass rounded-xl p-8 text-center text-slate-400"><i class="fas fa-star text-4xl block mb-3 opacity-30"></i>No players shortlisted yet</div>';return}
-  grid.innerHTML=data.map(p=>renderPlayerCard(p)).join('')
+  if(!data?.length){grid.innerHTML='<div style="color:#8b949e;grid-column:1/-1;text-align:center;padding:48px">No players shortlisted yet</div>';return}
+  grid.innerHTML=data.map(p=>renderCard(p)).join('')
 }
 
-async function toggleShortlist(id,current){
-  await sb.from('s360_players').update({shortlisted:!current}).eq('id',id)
+async function toggleShortlist(id,current,e){
+  e.stopPropagation()
+  await SB.from('s360_players').update({shortlisted:!current}).eq('id',id)
   loadPlayers()
 }
 
 async function generateReport(){
   const player=document.getElementById('ai-player').value,stats=document.getElementById('ai-stats').value,target=document.getElementById('ai-target').value
-  if(!player){showToast('Fill player info','error');return}
-  document.getElementById('ai-report').innerHTML='<div class="flex items-center gap-3 text-blue-400"><div class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-400"></div><span>Generating report...</span></div>'
-  try{
-    const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+GROQ_KEY},body:JSON.stringify({model:'llama-3.3-70b-versatile',messages:[{role:'user',content:`You are a professional football/sports scout. Write a detailed scouting report.\n\nPLAYER: ${player}\nSTATS & OBSERVATIONS: ${stats}\nTARGET LEVEL: ${target||'Professional'}\n\nReport structure:\n1. OVERALL RATING (/100)\n2. KEY STRENGTHS (3 points)\n3. WEAKNESSES (2 points)\n4. POTENTIAL CEILING\n5. RECOMMENDED ROLE\n6. TRANSFER VALUE estimate\n7. VERDICT (Sign Now / Monitor / Pass)\n\nBe specific and professional.`}]})})
-    const data=await res.json()
-    document.getElementById('ai-report').innerHTML=`<div class="text-sm text-slate-300 whitespace-pre-line leading-relaxed">${(data.choices?.[0]?.message?.content||'').replace(/\*\*(.*?)\*\*/g,'<strong class="text-blue-400">$1</strong>').replace(/\n/g,'<br>')}</div>`
-  }catch(e){document.getElementById('ai-report').innerHTML='<p class="text-red-400">Error: '+e.message+'</p>'}
+  if(!player)return
+  document.getElementById('ai-report').innerHTML='<div style="color:#4ade80;text-align:center;padding:30px">⚡ Generating report...</div>'
+  const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+GROQ},body:JSON.stringify({model:'llama-3.3-70b-versatile',max_tokens:700,messages:[{role:'user',content:`You are a professional football/sports scout at a top European club. Write a formal scouting report.\n\nPLAYER: ${player}\nSTATS: ${stats}\nTARGET LEVEL: ${target||'Professional'}\n\nFormat:\n**OVERALL RATING: X/100**\n\n**TECHNICAL STRENGTHS:**\n- ...\n\n**AREAS FOR IMPROVEMENT:**\n- ...\n\n**POTENTIAL CEILING:** ...\n\n**TRANSFER VALUE:** €X-Y million\n\n**VERDICT:** Sign / Monitor / Pass\n\n**NEXT STEPS:** ...\n\nBe professional and specific.`}]})})
+  const d=await res.json()
+  document.getElementById('ai-report').innerHTML=`<div style="font-size:14px;line-height:1.8">${(d.choices?.[0]?.message?.content||'').replace(/\*\*(.*?)\*\*/g,'<strong style="color:#4ade80">$1</strong>').replace(/\n/g,'<br>')}</div>`
 }
 
-async function deleteRec(table,id,reload){if(!confirm('Delete?'))return;await sb.from(table).delete().eq('id',id);reload()}
-loadPlayers()
+async function init(){await seedData();loadPlayers()}
+init()
 </script>
 </body>
 </html>
